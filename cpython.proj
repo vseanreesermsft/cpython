@@ -128,6 +128,22 @@
       <PyCacheDirsDeduplicated Include="@(PyCacheDirs->Distinct())" />
     </ItemGroup>
     <RemoveDir Directories="$(PythonInstallDir)include;$(PythonInstallDir)lib\python$(PythonMajorVersion)\test\;@(PyCacheDirsDeduplicated)" />
+    <ItemGroup>
+      <PythonToStrip Include="$(PythonInstallDir)\bin\python3" />
+      <PythonToStrip Include="$(PythonInstallDir)\bin\python$(PythonMajorVersion)" />
+    </ItemGroup>
+    <Message Importance="High" Text="** Running dsymutil -flat %(PythonToStrip.Identity)" />
+    <Exec IgnoreStandardErrorWarningFormat="true"
+      Command="dsymutil -flat %(PythonToStrip.Identity)"
+      Condition="'$(BuildOS)' == 'OSX'" />
+    <Message Importance="High" Text="** Running strip -no_code_signature_warning -S %(PythonToStrip.Identity)" />
+    <Exec IgnoreStandardErrorWarningFormat="true"
+      Command="strip -no_code_signature_warning -S %(PythonToStrip.Identity)"
+      Condition="'$(BuildOS)' == 'OSX'" />
+    <Message Importance="High" Text="** Running codesign -f -s - %(PythonToStrip.Identity)" />
+    <Exec IgnoreStandardErrorWarningFormat="true"
+      Command="codesign -f -s - %(PythonToStrip.Identity)"
+      Condition="'$(BuildOS)' == 'OSX'" />
   </Target>
 
   <Target Name="BuildPythonWindows" BeforeTargets="Build" Condition="'$(BuildOS)' == 'Windows_NT'">
@@ -153,11 +169,11 @@
       <PythonDebugFlag Condition="'$(Configuration)' == 'Debug'">-d</PythonDebugFlag>
     </PropertyGroup>
     <Exec WorkingDirectory="$([System.IO.Path]::GetPathRoot($(MSBuildProjectFullPath)))"
-      Command="python $(ProjectDir)PC\layout -vv -b $(PythonBuildDir)\$(PythonLayoutArch) --arch $(PythonLayoutArch) --catalog $(PythonBuildDir)\python.cat --include-tools --include-dev --include-stable"
+      Command="python $(ProjectDir)PC\layout -vv -b $(PythonBuildDir)\$(PythonLayoutArch) --arch $(PythonLayoutArch) --catalog $(PythonBuildDir)\python.cat --include-tools --include-dev --include-stable --include-symbols"
       IgnoreStandardErrorWarningFormat="true"
       EnvironmentVariables="PYTHON_HEXVERSION=$(PythonHexVersion)" />
     <Exec WorkingDirectory="$([System.IO.Path]::GetPathRoot($(MSBuildProjectFullPath)))"
-      Command="python $(ProjectDir)PC\layout -vv -s $(ProjectDir) -b $(PythonBuildDir)\$(PythonLayoutArch) --arch $(PythonLayoutArch) --copy $(PythonInstallDir) $(PythonDebugFlag) --doc-build $(ProjectDir)doc --include-tools --include-dev --include-stable --include-cat $(PythonBuildDir)\python.cat"
+      Command="python $(ProjectDir)PC\layout -vv -s $(ProjectDir) -b $(PythonBuildDir)\$(PythonLayoutArch) --arch $(PythonLayoutArch) --copy $(PythonInstallDir) $(PythonDebugFlag) --doc-build $(ProjectDir)doc --include-tools --include-dev --include-stable --include-cat $(PythonBuildDir)\python.cat --include-symbols"
       IgnoreStandardErrorWarningFormat="true"
       EnvironmentVariables="PYTHON_HEXVERSION=$(PythonHexVersion)" />
   </Target>
