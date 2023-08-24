@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.Build.Traversal">
 
-  <Target Name="ProvisionUniversalOpenSSL" BeforeTargets="BuildPythonUnix" Condition="'$(ProvisionUniversalOpenSSL)' == 'true' and !Exists('$(ProvisionedOpenSSLDir)\include\openssl\ssl.h')">
+  <Target Name="ProvisionUniversalDependencies" BeforeTargets="BuildPythonUnix" Condition="'$(ProvisionUniversalDependencies)' == 'true' and !Exists('$(ProvisionedOpenSSLDir)\include\openssl\ssl.h')">
     <!-- Python needs to build against a static OpenSSL, in order for https to work (e.g.
          if pip is expected to work). Unfortunately, we're expected to take OpenSSL from
          Homebrew, and Homebrew does not in any way shape or form support Universal
@@ -11,8 +11,8 @@
     <DownloadFile DestinationFileName="brew.tar.gz"
       DestinationFolder="$(BaseIntermediateOutputPath)"
       Retries="10"
-      SourceUrl="https://github.com/Homebrew/brew/tarball/4.0.11" />
-    <MakeDir Directories="$(HomebrewDir);$(OpenSSLX64Dir);$(OpenSSLARM64Dir)" />
+      SourceUrl="https://github.com/Homebrew/brew/tarball/4.1.5" />
+    <MakeDir Directories="$(HomebrewDir);$(OpenSSLX64Dir);$(OpenSSLARM64Dir);$(Libb2X64Dir);$(Libb2ARM64Dir)" />
     <Exec WorkingDirectory="$(BaseIntermediateOutputPath)"
       Command="tar xf brew.tar.gz --strip 1 -C $(HomebrewDir)"
       IgnoreStandardErrorWarningFormat="true" />
@@ -22,7 +22,11 @@
       IgnoreExitCode="true"
       Condition="!Exists('$(HomebrewDir)\Library\Taps\homebrew\homebrew-core\LICENSE.txt')" />
     <Exec WorkingDirectory="$(HomebrewDir)"
-      Command="bin/brew fetch --force --bottle-tag=big_sur openssl@1.1"
+      Command="bin/brew fetch --force --os big_sur --arch all openssl@1.1"
+      IgnoreStandardErrorWarningFormat="true"
+      Condition="!Exists('$(OpenSSLX64Dir)/LICENSE')" />
+    <Exec WorkingDirectory="$(HomebrewDir)"
+      Command="bin/brew fetch --force --os big_sur --arch all libb2"
       IgnoreStandardErrorWarningFormat="true"
       Condition="!Exists('$(OpenSSLX64Dir)/LICENSE')" />
     <Exec WorkingDirectory="$(HomebrewDir)"
@@ -37,10 +41,6 @@
       IgnoreStandardErrorWarningFormat="true"
       Condition="!Exists('$(OpenSSLX64Dir)/LICENSE')" />
     <Exec WorkingDirectory="$(HomebrewDir)"
-      Command="brew fetch --force --bottle-tag=arm64_big_sur openssl@1.1"
-      IgnoreStandardErrorWarningFormat="true"
-      Condition="!Exists('$(OpenSSLARM64Dir)/LICENSE')" />
-    <Exec WorkingDirectory="$(HomebrewDir)"
       Command="bin/brew --cache --bottle-tag=arm64_big_sur openssl@1.1"
       IgnoreStandardErrorWarningFormat="true"
       ConsoleToMsBuild="true"
@@ -51,13 +51,39 @@
       Command="tar xf $(OpenSSLArchiveARM64) --strip-components=2"
       IgnoreStandardErrorWarningFormat="true"
       Condition="!Exists('$(OpenSSLARM64Dir)/LICENSE')" />
+    <Exec WorkingDirectory="$(HomebrewDir)"
+      Command="bin/brew --cache --bottle-tag=big_sur libb2"
+      IgnoreStandardErrorWarningFormat="true"
+      ConsoleToMsBuild="true"
+      Condition="!Exists('$(Libb2X64Dir)\lib')" >
+      <Output TaskParameter="ConsoleOutput" PropertyName="Libb2ArchiveX64" />
+    </Exec>
+    <Exec WorkingDirectory="$(Libb2X64Dir)"
+      Command="tar xf $(Libb2ArchiveX64) --strip-components=2"
+      IgnoreStandardErrorWarningFormat="true"
+      Condition="!Exists('$(Libb2X64Dir)\lib')" />
+    <Exec WorkingDirectory="$(HomebrewDir)"
+      Command="bin/brew --cache --bottle-tag=arm64_big_sur libb2"
+      IgnoreStandardErrorWarningFormat="true"
+      ConsoleToMsBuild="true"
+      Condition="!Exists('$(Libb2ARM64Dir)\lib')" >
+      <Output TaskParameter="ConsoleOutput" PropertyName="Libb2ArchiveARM64" />
+    </Exec>
+    <Exec WorkingDirectory="$(Libb2ARM64Dir)"
+      Command="tar xf $(Libb2ArchiveARM64) --strip-components=2"
+      IgnoreStandardErrorWarningFormat="true"
+      Condition="!Exists('$(Libb2ARM64Dir)\lib')" />
     <MakeDir Directories="$(ProvisionedOpenSSLDir)\lib;$(ProvisionedOpenSSLDir)\include" Condition="!Exists('$(ProvisionedOpenSSLDir)\lib')" />
+    <MakeDir Directories="$(ProvisionedLibb2Dir)\lib" Condition="!Exists('$(ProvisionedLibb2Dir)\lib')" />
     <Exec Command="lipo -create $(OpenSSLX64Dir)/lib/libcrypto.a $(OpenSSLARM64Dir)/lib/libcrypto.a -output $(ProvisionedOpenSSLDir)/lib/libcrypto.a"
       IgnoreStandardErrorWarningFormat="true"
       Condition="!Exists('$(ProvisionedOpenSSLDir)\lib\libcrypto.a')" />
     <Exec Command="lipo -create $(OpenSSLX64Dir)/lib/libssl.a $(OpenSSLARM64Dir)/lib/libssl.a -output $(ProvisionedOpenSSLDir)/lib/libssl.a"
       IgnoreStandardErrorWarningFormat="true"
       Condition="!Exists('$(ProvisionedOpenSSLDir)\lib\libssl.a')" />
+    <Exec Command="lipo -create $(Libb2X64Dir)/lib/libb2.a $(Libb2ARM64Dir)/lib/libb2.a -output $(ProvisionedLibb2Dir)/lib/libb2.a"
+      IgnoreStandardErrorWarningFormat="true"
+      Condition="!Exists('$(ProvisionedLibb2Dir)\lib\libb2.a')" />
     <ItemGroup>
       <OpenSSLIncludes Include="$(OpenSSLARM64Dir)\include\**" />
     </ItemGroup>
@@ -68,21 +94,28 @@
 
   <Target Name="BuildPythonUnix" BeforeTargets="Build" Condition="'$(BuildOS)' != 'Windows_NT'">
     <PropertyGroup>
-      <OpenSSLDir Condition="'$(ProvisionUniversalOpenSSL)' == 'true'">$(ProvisionedOpenSSLDir)</OpenSSLDir>
+      <OpenSSLDir Condition="'$(ProvisionUniversalDependencies)' == 'true'">$(ProvisionedOpenSSLDir)</OpenSSLDir>
+      <Libb2Dir Condition="'$(ProvisionUniversalDependencies)' == 'true'">$(ProvisionedLibb2Dir)</Libb2Dir>
     </PropertyGroup>
     <Error Text="OpenSSLDir must be specified, pointing to a universal build of OpenSSL" Condition="!Exists('$(OpenSSLDir)\lib\libssl.a')" />
+    <Error Text="Libb2Dir must be specified, pointing to a universal build of libb2" Condition="!Exists('$(Libb2Dir)\lib\libb2.a')" />
     <Message Text="Checking for libssl architectures" Importance="High" />
     <Exec Command="lipo -archs $(OpenSSLDir)/lib/libssl.a" ConsoleToMsBuild="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="LibSSLArchs" />
     </Exec>
     <Error Text="OpenSSL must be a universal binary, detected architectures: $(LibSSLArchs)" Condition="$(LibSSLArchs.Split(' ').Length) &lt; 2" />
+    <Message Text="Checking for libb2 architectures" Importance="High" />
+    <Exec Command="lipo -archs $(Libb2Dir)/lib/libb2.a" ConsoleToMsBuild="true">
+      <Output TaskParameter="ConsoleOutput" PropertyName="Libb2Archs" />
+    </Exec>
+    <Error Text="libb2 must be a universal binary, detected architectures: $(Libb2Archs)" Condition="$(Libb2Archs.Split(' ').Length) &lt; 2" />
     <!-- Python build system doesn't really support cross-compilation on Mac - but it does
          support building universal binaries. So we cannot use the -build/-host flags to
          produce an arm64 binary on our x64 Mac infrastructure - instead we use the build
          system's built-in support for universal binaries to build for all target architectures
          at once, then split them out again later -->
     <PropertyGroup Condition="'$(BuildOS)' == 'OSX'">
-      <PythonConfigureFlags>--enable-universalsdk --with-universal-archs=universal2 --with-openssl=$(OpenSSLDir) MACOSX_DEPLOYMENT_TARGET=11.0</PythonConfigureFlags>
+      <PythonConfigureFlags>--enable-universalsdk --with-universal-archs=universal2 --with-openssl=$(OpenSSLDir) LIBB2_LIBS="-L$(Libb2Dir)/lib -lb2" MACOSX_DEPLOYMENT_TARGET=11.0</PythonConfigureFlags>
     </PropertyGroup>
     <MakeDir Directories="$(PythonBuildDir)" Condition="!Exists('$(PythonBuildDir)')" />
     <Exec WorkingDirectory="$(PythonBuildDir)"
@@ -101,15 +134,25 @@
     <Exec WorkingDirectory="$(PythonBuildDir)"
       Command="make install"
       IgnoreStandardErrorWarningFormat="true"
-      EnvironmentVariables="DESTDIR=$(PythonInstallDir)" />
+      EnvironmentVariables="DESTDIR=$(PythonInstallDir);PYTHONHOME=$(PythonInstallDir)/usr/local/" />
     <ItemGroup>
       <PythonFiles Include="$(PythonInstallDir)\usr\local\**" />
     </ItemGroup>
    <Move SourceFiles="@(PythonFiles)"
       DestinationFiles="@(PythonFiles->'$(PythonInstallDir)\%(RecursiveDir)%(Filename)%(Extension)')" />
     <RemoveDir Directories="$(PythonInstallDir)\usr" />
+
+    <!-- manually install pip due to bug in ensurepip preventing install into alt dirs -->
+    <ItemGroup>
+      <WhlFiles Include="$(PythonInstallDir)/lib/python$(PythonMajorVersion)/ensurepip/_bundled/*.whl" />
+    </ItemGroup>
+    <Unzip DestinationFolder="$(PythonInstallDir)/lib/python$(PythonMajorVersion)/site-packages" SourceFiles="@(WhlFiles)" />
+    <Copy SourceFiles="$(RootRepoDir)\eng\launchscript.sh" DestinationFiles="$(PythonInstallDir)\bin\pip$(PythonMajorVersion)" />
+    <Copy SourceFiles="$(RootRepoDir)\eng\launchscript.sh" DestinationFiles="$(PythonInstallDir)\bin\pip3" />
+
     <Exec WorkingDirectory="$(PythonInstallDir)"
-      Command="bin/python$(PythonMajorVersion) bin/pip$(PythonMajorVersion) install certifi==2020.12.5 chardet==4.0.0 idna==2.10 requests==2.25.1 urllib3==1.26.3"
+      Command="bin/python$(PythonMajorVersion) bin/pip$(PythonMajorVersion) install certifi==2023.7.22 chardet==5.2.0 idna==3.4 requests==2.31.0 urllib3==2.0.4"
+      EnvironmentVariables="PYTHONHOME=$(PythonInstallDir)"
       IgnoreStandardErrorWarningFormat="true" />
     <Exec WorkingDirectory="$(PythonInstallDir)"
       Command="lipo -thin $(LipoArchitecture) bin/python3 -output bin/python3.$(TargetArchitecture)"

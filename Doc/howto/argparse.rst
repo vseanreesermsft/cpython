@@ -1,10 +1,12 @@
+.. _argparse-tutorial:
+
 *****************
 Argparse Tutorial
 *****************
 
 :author: Tshepang Lekhonkhobe
 
-.. _argparse-tutorial:
+.. currentmodule:: argparse
 
 This tutorial is intended to be a gentle introduction to :mod:`argparse`, the
 recommended command-line parsing module in the Python standard library.
@@ -12,7 +14,7 @@ recommended command-line parsing module in the Python standard library.
 .. note::
 
    There are two other modules that fulfill the same task, namely
-   :mod:`getopt` (an equivalent for :c:func:`getopt` from the C
+   :mod:`getopt` (an equivalent for ``getopt()`` from the C
    language) and the deprecated :mod:`optparse`.
    Note also that :mod:`argparse` is based on :mod:`optparse`,
    and therefore very similar in terms of usage.
@@ -83,7 +85,7 @@ Following is a result of running the code:
    $ python3 prog.py --help
    usage: prog.py [-h]
 
-   optional arguments:
+   options:
      -h, --help  show this help message and exit
    $ python3 prog.py --verbose
    usage: prog.py [-h]
@@ -130,20 +132,20 @@ And running the code:
    positional arguments:
      echo
 
-   optional arguments:
+   options:
      -h, --help  show this help message and exit
    $ python3 prog.py foo
    foo
 
 Here is what's happening:
 
-* We've added the :meth:`add_argument` method, which is what we use to specify
+* We've added the :meth:`~ArgumentParser.add_argument` method, which is what we use to specify
   which command-line options the program is willing to accept. In this case,
   I've named it ``echo`` so that it's in line with its function.
 
 * Calling our program now requires us to specify an option.
 
-* The :meth:`parse_args` method actually returns some data from the
+* The :meth:`~ArgumentParser.parse_args` method actually returns some data from the
   options specified, in this case, ``echo``.
 
 * The variable is some form of 'magic' that :mod:`argparse` performs for free
@@ -172,7 +174,7 @@ And we get:
    positional arguments:
      echo        echo the string you use here
 
-   optional arguments:
+   options:
      -h, --help  show this help message and exit
 
 Now, how about doing something even more useful::
@@ -241,7 +243,7 @@ And the output:
    $ python3 prog.py --help
    usage: prog.py [-h] [--verbosity VERBOSITY]
 
-   optional arguments:
+   options:
      -h, --help            show this help message and exit
      --verbosity VERBOSITY
                            increase output verbosity
@@ -256,7 +258,7 @@ Here is what is happening:
 
 * To show that the option is actually optional, there is no error when running
   the program without it. Note that by default, if an optional argument isn't
-  used, the relevant variable, in this case :attr:`args.verbosity`, is
+  used, the relevant variable, in this case ``args.verbosity``, is
   given ``None`` as a value, which is the reason it fails the truth
   test of the :keyword:`if` statement.
 
@@ -289,7 +291,7 @@ And the output:
    $ python3 prog.py --help
    usage: prog.py [-h] [--verbose]
 
-   optional arguments:
+   options:
      -h, --help  show this help message and exit
      --verbose   increase output verbosity
 
@@ -299,7 +301,7 @@ Here is what is happening:
   We even changed the name of the option to match that idea.
   Note that we now specify a new keyword, ``action``, and give it the value
   ``"store_true"``. This means that, if the option is specified,
-  assign the value ``True`` to :data:`args.verbose`.
+  assign the value ``True`` to ``args.verbose``.
   Not specifying it implies ``False``.
 
 * It complains when you specify a value, in true spirit of what flags
@@ -332,7 +334,7 @@ And here goes:
    $ python3 prog.py --help
    usage: prog.py [-h] [-v]
 
-   optional arguments:
+   options:
      -h, --help     show this help message and exit
      -v, --verbose  increase output verbosity
 
@@ -353,7 +355,7 @@ Our program keeps growing in complexity::
    args = parser.parse_args()
    answer = args.square**2
    if args.verbose:
-       print("the square of {} equals {}".format(args.square, answer))
+       print(f"the square of {args.square} equals {answer}")
    else:
        print(answer)
 
@@ -387,9 +389,9 @@ multiple verbosity values, and actually get to use them::
    args = parser.parse_args()
    answer = args.square**2
    if args.verbosity == 2:
-       print("the square of {} equals {}".format(args.square, answer))
+       print(f"the square of {args.square} equals {answer}")
    elif args.verbosity == 1:
-       print("{}^2 == {}".format(args.square, answer))
+       print(f"{args.square}^2 == {answer}")
    else:
        print(answer)
 
@@ -421,9 +423,9 @@ Let's fix it by restricting the values the ``--verbosity`` option can accept::
    args = parser.parse_args()
    answer = args.square**2
    if args.verbosity == 2:
-       print("the square of {} equals {}".format(args.square, answer))
+       print(f"the square of {args.square} equals {answer}")
    elif args.verbosity == 1:
-       print("{}^2 == {}".format(args.square, answer))
+       print(f"{args.square}^2 == {answer}")
    else:
        print(answer)
 
@@ -440,7 +442,7 @@ And the output:
    positional arguments:
      square                display a square of a given number
 
-   optional arguments:
+   options:
      -h, --help            show this help message and exit
      -v {0,1,2}, --verbosity {0,1,2}
                            increase output verbosity
@@ -461,14 +463,15 @@ verbosity argument (check the output of ``python --help``)::
    args = parser.parse_args()
    answer = args.square**2
    if args.verbosity == 2:
-       print("the square of {} equals {}".format(args.square, answer))
+       print(f"the square of {args.square} equals {answer}")
    elif args.verbosity == 1:
-       print("{}^2 == {}".format(args.square, answer))
+       print(f"{args.square}^2 == {answer}")
    else:
        print(answer)
 
 We have introduced another action, "count",
-to count the number of occurrences of a specific optional arguments:
+to count the number of occurrences of specific options.
+
 
 .. code-block:: shell-session
 
@@ -489,7 +492,7 @@ to count the number of occurrences of a specific optional arguments:
    positional arguments:
      square           display a square of a given number
 
-   optional arguments:
+   options:
      -h, --help       show this help message and exit
      -v, --verbosity  increase output verbosity
    $ python3 prog.py 4 -vvv
@@ -529,9 +532,9 @@ Let's fix::
 
    # bugfix: replace == with >=
    if args.verbosity >= 2:
-       print("the square of {} equals {}".format(args.square, answer))
+       print(f"the square of {args.square} equals {answer}")
    elif args.verbosity >= 1:
-       print("{}^2 == {}".format(args.square, answer))
+       print(f"{args.square}^2 == {answer}")
    else:
        print(answer)
 
@@ -566,9 +569,9 @@ Let's fix that bug::
    args = parser.parse_args()
    answer = args.square**2
    if args.verbosity >= 2:
-       print("the square of {} equals {}".format(args.square, answer))
+       print(f"the square of {args.square} equals {answer}")
    elif args.verbosity >= 1:
-       print("{}^2 == {}".format(args.square, answer))
+       print(f"{args.square}^2 == {answer}")
    else:
        print(answer)
 
@@ -606,9 +609,9 @@ not just squares::
    args = parser.parse_args()
    answer = args.x**args.y
    if args.verbosity >= 2:
-       print("{} to the power {} equals {}".format(args.x, args.y, answer))
+       print(f"{args.x} to the power {args.y} equals {answer}")
    elif args.verbosity >= 1:
-       print("{}^{} == {}".format(args.x, args.y, answer))
+       print(f"{args.x}^{args.y} == {answer}")
    else:
        print(answer)
 
@@ -626,7 +629,7 @@ Output:
      x                the base
      y                the exponent
 
-   optional arguments:
+   options:
      -h, --help       show this help message and exit
      -v, --verbosity
    $ python3 prog.py 4 2 -v
@@ -645,9 +648,9 @@ to display *more* text instead::
    args = parser.parse_args()
    answer = args.x**args.y
    if args.verbosity >= 2:
-       print("Running '{}'".format(__file__))
+       print(f"Running '{__file__}'")
    if args.verbosity >= 1:
-       print("{}^{} == ".format(args.x, args.y), end="")
+       print(f"{args.x}^{args.y} == ", end="")
    print(answer)
 
 Output:
@@ -668,7 +671,7 @@ Conflicting options
 
 So far, we have been working with two methods of an
 :class:`argparse.ArgumentParser` instance. Let's introduce a third one,
-:meth:`add_mutually_exclusive_group`. It allows for us to specify options that
+:meth:`~ArgumentParser.add_mutually_exclusive_group`. It allows for us to specify options that
 conflict with each other. Let's also change the rest of the program so that
 the new functionality makes more sense:
 we'll introduce the ``--quiet`` option,
@@ -688,9 +691,9 @@ which will be the opposite of the ``--verbose`` one::
    if args.quiet:
        print(answer)
    elif args.verbose:
-       print("{} to the power {} equals {}".format(args.x, args.y, answer))
+       print(f"{args.x} to the power {args.y} equals {answer}")
    else:
-       print("{}^{} == {}".format(args.x, args.y, answer))
+       print(f"{args.x}^{args.y} == {answer}")
 
 Our program is now simpler, and we've lost some functionality for the sake of
 demonstration. Anyways, here's the output:
@@ -731,9 +734,9 @@ your program, just in case they don't know::
    if args.quiet:
        print(answer)
    elif args.verbose:
-       print("{} to the power {} equals {}".format(args.x, args.y, answer))
+       print(f"{args.x} to the power {args.y} equals {answer}")
    else:
-       print("{}^{} == {}".format(args.x, args.y, answer))
+       print(f"{args.x}^{args.y} == {answer}")
 
 Note that slight difference in the usage text. Note the ``[-v | -q]``,
 which tells us that we can either use ``-v`` or ``-q``,
@@ -750,7 +753,7 @@ but not both at the same time:
      x              the base
      y              the exponent
 
-   optional arguments:
+   options:
      -h, --help     show this help message and exit
      -v, --verbose
      -q, --quiet

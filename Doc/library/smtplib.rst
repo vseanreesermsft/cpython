@@ -15,16 +15,17 @@
 --------------
 
 The :mod:`smtplib` module defines an SMTP client session object that can be used
-to send mail to any Internet machine with an SMTP or ESMTP listener daemon.  For
+to send mail to any internet machine with an SMTP or ESMTP listener daemon.  For
 details of SMTP and ESMTP operation, consult :rfc:`821` (Simple Mail Transfer
 Protocol) and :rfc:`1869` (SMTP Service Extensions).
 
+.. include:: ../includes/wasm-notavail.rst
 
 .. class:: SMTP(host='', port=0, local_hostname=None[, timeout], source_address=None)
 
    An :class:`SMTP` instance encapsulates an SMTP connection.  It has methods
    that support a full repertoire of SMTP and ESMTP operations. If the optional
-   host and port parameters are given, the SMTP :meth:`connect` method is
+   *host* and *port* parameters are given, the SMTP :meth:`connect` method is
    called with those parameters during initialization.  If specified,
    *local_hostname* is used as the FQDN of the local host in the HELO/EHLO
    command.  Otherwise, the local hostname is found using
@@ -32,13 +33,13 @@ Protocol) and :rfc:`1869` (SMTP Service Extensions).
    than a success code, an :exc:`SMTPConnectError` is raised. The optional
    *timeout* parameter specifies a timeout in seconds for blocking operations
    like the connection attempt (if not specified, the global default timeout
-   setting will be used).  If the timeout expires, :exc:`socket.timeout` is
-   raised.  The optional source_address parameter allows binding
+   setting will be used).  If the timeout expires, :exc:`TimeoutError` is
+   raised.  The optional *source_address* parameter allows binding
    to some specific source address in a machine with multiple network
    interfaces, and/or to some specific source TCP port. It takes a 2-tuple
-   (host, port), for the socket to bind to as its source address before
-   connecting. If omitted (or if host or port are ``''`` and/or 0 respectively)
-   the OS default behavior will be used.
+   ``(host, port)``, for the socket to bind to as its source address before
+   connecting. If omitted (or if *host* or *port* are ``''`` and/or ``0``
+   respectively) the OS default behavior will be used.
 
    For normal use, you should only require the initialization/connect,
    :meth:`sendmail`, and :meth:`SMTP.quit` methods.
@@ -279,9 +280,10 @@ An :class:`SMTP` instance has the following methods:
    response for ESMTP option and store them for use by :meth:`has_extn`.
    Also sets several informational attributes: the message returned by
    the server is stored as the :attr:`ehlo_resp` attribute, :attr:`does_esmtp`
-   is set to true or false depending on whether the server supports ESMTP, and
-   :attr:`esmtp_features` will be a dictionary containing the names of the
-   SMTP service extensions this server supports, and their parameters (if any).
+   is set to ``True`` or ``False`` depending on whether the server supports
+   ESMTP, and :attr:`esmtp_features` will be a dictionary containing the names
+   of the SMTP service extensions this server supports, and their parameters
+   (if any).
 
    Unless you wish to use :meth:`has_extn` before sending mail, it should not be
    necessary to call this method explicitly.  It will be implicitly called by
