@@ -30,7 +30,6 @@ stages:
       - job: Build_macOS
         displayName: macOS
         timeoutInMinutes: 120
-        variables:
         strategy:
           matrix:
             x64:
