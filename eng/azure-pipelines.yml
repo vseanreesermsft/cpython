@@ -75,7 +75,7 @@ extends:
               displayName: 'Clean up working directory'
 
             - bash: |
-                ./build.sh --ci --restore --build --pack --arch arm64 --configuration $(_BuildConfig) $(_InternalBuildArgs) /p:RestoreUsingNuGetTargets=false /p:ProvisionUniversalDependencies=true
+                ./build.sh --ci --restore --build --pack --arch arm64 --configuration $(_BuildConfig) $(_InternalBuildArgs) /p:RestoreUsingNuGetTargets=false /p:ProvisionUniversalOpenSSL=true
               displayName: 'Build and package'
 
             - bash:
