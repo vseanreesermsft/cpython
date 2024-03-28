@@ -62,6 +62,14 @@ extends:
               displayName: Publish packages
               condition: and(succeeded(), ne(variables['System.TeamProject'], 'public'), ne(variables['Build.Reason'], 'PullRequest'))
 
+            # Broken symbolic links break the SBOM processing, remove them
+            - bash: |
+                for f in $(find . -type l -exec test ! -e {} \; -print); do
+                  echo "Deleting broken symlink $f"
+                  rm "$f"
+                done
+              displayName: Remove broken symbolic links
+
           ############ MACOS arm64 BUILD ############
           - job: Build_macOS_arm64
             displayName: macOS_arm64
@@ -84,6 +92,14 @@ extends:
                 ./eng/common/build.sh --ci --restore --publish --configuration $(_BuildConfig) $(_InternalBuildArgs) /p:AssetManifestOS=osx /p:PlatformName=arm64 --projects $(Build.SourcesDirectory)/cpython.proj
               displayName: Publish packages
               condition: and(succeeded(), ne(variables['System.TeamProject'], 'public'), ne(variables['Build.Reason'], 'PullRequest'))
+
+            # Broken symbolic links break the SBOM processing, remove them
+            - bash: |
+                for f in $(find . -type l -exec test ! -e {} \; -print); do
+                  echo "Deleting broken symlink $f"
+                  rm "$f"
+                done
+              displayName: Remove broken symbolic links
 
           ############ WINDOWS x64 BUILD ############
           - job: Build_Windows_x64
